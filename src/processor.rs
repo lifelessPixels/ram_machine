@@ -61,17 +61,17 @@ impl<T: Tape> Processor<T> {
         self.halted
     }
 
-    fn get_intermediate_address(&self, intermediate_address: MemoryLocation) -> Result<MemoryLocation, &'static str> {
+    fn get_intermediate_address(&self, intermediate_address: MemoryLocation) -> Result<MemoryLocation, String> {
         let x = self.memory.get(intermediate_address);
-        if x < 0 { return Err("intermediate pointer must be non-negative"); }
+        if x < 0 { return Err("intermediate pointer must be non-negative".to_string()); }
         Ok(x as MemoryLocation)
     }
 
     // TODO: replace most Err(...) with panic! (after implementing source code parser, if correctly implemented, should not happen)
-    pub fn execute_instruction(&mut self) -> Result<(), &str> {
+    pub fn execute_instruction(&mut self) -> Result<(), String> {
         if self.instruction_pointer >= self.instructions.len() {
             self.halted = true;
-            return Err("instruction pointer run out of instruction space, processor halted");
+            return Err("instruction pointer run out of instruction space, processor halted".to_string());
         }
         let current_instruction = &self.instructions[self.instruction_pointer];
         match current_instruction {
@@ -88,7 +88,7 @@ impl<T: Tape> Processor<T> {
                         };
                         
                     }
-                    _ => return Err("load operation cannot be provided with label")
+                    _ => return Err("load operation cannot be provided with label".to_string())
                 }
                 self.memory.set(value_to_load, 0);
                 self.instruction_pointer += 1;
@@ -105,7 +105,7 @@ impl<T: Tape> Processor<T> {
                             Err(message) => return Err(message)
                         };
                     },
-                    _ => return Err("store operation cannot be provided with immediate or label")
+                    _ => return Err("store operation cannot be provided with immediate or label".to_string())
                 }
                 self.memory.set(accumulator, address_to_store);
                 self.instruction_pointer += 1;
@@ -122,7 +122,7 @@ impl<T: Tape> Processor<T> {
                             Err(message) => return Err(message)
                         };
                     }
-                    _ => { return Err("add operation cannot be provided with label") }
+                    _ => { return Err("add operation cannot be provided with label".to_string()) }
                 }
                 let new_accumulator = self.memory.get(0) + value_to_add;
                 self.memory.set(new_accumulator, 0);
@@ -140,7 +140,7 @@ impl<T: Tape> Processor<T> {
                             Err(message) => return Err(message)
                         };
                     }
-                    _ => { return Err("sub operation cannot be provided with label") }
+                    _ => { return Err("sub operation cannot be provided with label".to_string()) }
                 }
                 let new_accumulator = self.memory.get(0) - value_to_sub;
                 self.memory.set(new_accumulator, 0);
@@ -158,7 +158,7 @@ impl<T: Tape> Processor<T> {
                             Err(message) => return Err(message)
                         };
                     }
-                    _ => { return Err("mult operation cannot be provided with label") }
+                    _ => { return Err("mult operation cannot be provided with label".to_string()) }
                 }
                 let new_accumulator = self.memory.get(0) * value_to_mult;
                 self.memory.set(new_accumulator, 0);
@@ -176,10 +176,10 @@ impl<T: Tape> Processor<T> {
                             Err(message) => return Err(message)
                         };
                     }
-                    _ => { return Err("div operation cannot be provided with label") }
+                    _ => { return Err("div operation cannot be provided with label".to_string()) }
                 }
                 if value_to_div == 0 {
-                    return Err("division by zero");
+                    return Err("division by zero".to_string());
                 }
                 let new_accumulator = self.memory.get(0) / value_to_div;
                 self.memory.set(new_accumulator, 0);
@@ -196,12 +196,12 @@ impl<T: Tape> Processor<T> {
                             Err(message) => return Err(message)
                         };
                     },
-                    _ => return Err("read operation cannot be provided with immediate or label")
+                    _ => return Err("read operation cannot be provided with immediate or label".to_string())
                 }
                 let tape_value = self.tapes.read();
                 match tape_value {
                     Some(value) => self.memory.set(value, address_to_store),
-                    None => return Err("tried to read, but end of tape occured")
+                    None => return Err("tried to read, but end of tape occured".to_string())
                 }
                 self.instruction_pointer += 1;
             },
@@ -217,7 +217,7 @@ impl<T: Tape> Processor<T> {
                             Err(message) => return Err(message)
                         };
                     },
-                    _ => return Err("write operation cannot be provided with label")
+                    _ => return Err("write operation cannot be provided with label".to_string())
                 }
                 self.tapes.write(value_to_write);
                 self.instruction_pointer += 1;
@@ -225,7 +225,7 @@ impl<T: Tape> Processor<T> {
             Instruction::Jump(operand) => {
                 match operand {
                     Operand::Label(value) => self.instruction_pointer = *value,
-                    _ => return Err("jump operation cannot be provided with immediate, immediate address or intermediate address")
+                    _ => return Err("jump operation cannot be provided with immediate, immediate address or intermediate address".to_string())
                 }
             },
             Instruction::Jgtz(operand) => {
@@ -237,7 +237,7 @@ impl<T: Tape> Processor<T> {
                             self.instruction_pointer += 1;
                         }
                     },
-                    _ => return Err("jump operation cannot be provided with immediate, immediate address or intermediate address")
+                    _ => return Err("jump operation cannot be provided with immediate, immediate address or intermediate address".to_string())
                 }
             },
             Instruction::Jzero(operand) => {
@@ -249,7 +249,7 @@ impl<T: Tape> Processor<T> {
                             self.instruction_pointer += 1;
                         }
                     },
-                    _ => return Err("jump operation cannot be provided with immediate, immediate address or intermediate address")
+                    _ => return Err("jump operation cannot be provided with immediate, immediate address or intermediate address".to_string())
                 }
             },
             Instruction::Halt => {
@@ -259,6 +259,7 @@ impl<T: Tape> Processor<T> {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn dump(&self) {
         println!("instruction_pointer: {}", self.instruction_pointer);
         self.memory.dump();
