@@ -4,7 +4,13 @@ type ImmediateValue = i64;
 type MemoryLocation = usize;
 type InstructionLocation = usize;
 
+pub trait Tape {
+    fn read(&mut self) -> Option<i64>;
+    fn write(&mut self, value: i64);
+} 
+
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum Operand {
     Immediate(ImmediateValue),
     ImmediateAddress(MemoryLocation),
@@ -13,6 +19,7 @@ pub enum Operand {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum Instruction {
     Load(Operand),
     Store(Operand),
@@ -25,18 +32,19 @@ pub enum Instruction {
     Jump(Operand),
     Jgtz(Operand),
     Jzero(Operand),
-    Halt(Operand)
+    Halt
 }
 
-pub struct Processor {
+pub struct Processor<T: Tape> {
     instructions: Vec<Instruction>,
     instruction_pointer: InstructionLocation,
     memory: Memory,
-    halted: bool
+    halted: bool,
+    tapes: T
 }
 
-impl Processor {
-    pub fn new(instructions: Vec<Instruction>, memory_size: usize) -> Self {
+impl<T: Tape> Processor<T> {
+    pub fn new(instructions: Vec<Instruction>, memory_size: usize, tapes: T) -> Self {
         if memory_size == 0 {
             panic!("error: tried to create processor with memory size of 0");
         }
@@ -44,7 +52,8 @@ impl Processor {
             instructions: instructions,
             instruction_pointer: 0,
             memory: Memory::new(memory_size),
-            halted: false
+            halted: false,
+            tapes: tapes
         }
     }
 
@@ -58,52 +67,200 @@ impl Processor {
         Ok(x as MemoryLocation)
     }
 
+    // TODO: replace most Err(...) with panic! (after implementing source code parser, if correctly implemented, should not happen)
     pub fn execute_instruction(&mut self) -> Result<(), &str> {
         if self.instruction_pointer >= self.instructions.len() {
             self.halted = true;
-            return Ok(());
+            return Err("instruction pointer run out of instruction space, processor halted");
         }
         let current_instruction = &self.instructions[self.instruction_pointer];
         match current_instruction {
             Instruction::Load(operand) => {
+                let value_to_load;
                 match operand {
-                    Operand::Immediate(value) => { self.memory.set(*value, 0); }
-                    Operand::ImmediateAddress(value) => { self.memory.set(self.memory.get(*value), 0); }
+                    Operand::Immediate(value) => value_to_load = *value,
+                    Operand::ImmediateAddress(value) => value_to_load = self.memory.get(*value),
                     Operand::IntermediateAddress(value) => { 
                         let address = self.get_intermediate_address(*value);
                         match address {
-                            Ok(address) => self.memory.set(self.memory.get(address), 0),
+                            Ok(address) => value_to_load = self.memory.get(address),
                             Err(message) => return Err(message)
                         };
                         
                     }
-                    _ => { return Err("load operation cannot be provided with label") }
+                    _ => return Err("load operation cannot be provided with label")
                 }
+                self.memory.set(value_to_load, 0);
                 self.instruction_pointer += 1;
             },
             Instruction::Store(operand) => {
                 let accumulator = self.memory.get(0);
+                let address_to_store;
                 match operand {
-                    Operand::ImmediateAddress(value) => { self.memory.set(accumulator, *value); }
+                    Operand::ImmediateAddress(value) => address_to_store = *value,
                     Operand::IntermediateAddress(value) => { 
                         let address = self.get_intermediate_address(*value);
                         match address {
-                            Ok(address) => self.memory.set(accumulator, address),
+                            Ok(address) => address_to_store = address,
+                            Err(message) => return Err(message)
+                        };
+                    },
+                    _ => return Err("store operation cannot be provided with immediate or label")
+                }
+                self.memory.set(accumulator, address_to_store);
+                self.instruction_pointer += 1;
+            },
+            Instruction::Add(operand) => {
+                let value_to_add;
+                match operand {
+                    Operand::Immediate(value) => value_to_add = *value,
+                    Operand::ImmediateAddress(value) => value_to_add = self.memory.get(*value),
+                    Operand::IntermediateAddress(value) => { 
+                        let address = self.get_intermediate_address(*value);
+                        match address {
+                            Ok(address) => value_to_add = self.memory.get(address),
                             Err(message) => return Err(message)
                         };
                     }
-                    _ => { return Err("store operation cannot be provided with immediate or label") }
+                    _ => { return Err("add operation cannot be provided with label") }
+                }
+                let new_accumulator = self.memory.get(0) + value_to_add;
+                self.memory.set(new_accumulator, 0);
+                self.instruction_pointer += 1;
+            },
+            Instruction::Sub(operand) => {
+                let value_to_sub;
+                match operand {
+                    Operand::Immediate(value) => value_to_sub = *value,
+                    Operand::ImmediateAddress(value) => value_to_sub = self.memory.get(*value),
+                    Operand::IntermediateAddress(value) => { 
+                        let address = self.get_intermediate_address(*value);
+                        match address {
+                            Ok(address) => value_to_sub = self.memory.get(address),
+                            Err(message) => return Err(message)
+                        };
+                    }
+                    _ => { return Err("sub operation cannot be provided with label") }
+                }
+                let new_accumulator = self.memory.get(0) - value_to_sub;
+                self.memory.set(new_accumulator, 0);
+                self.instruction_pointer += 1;
+            },
+            Instruction::Mult(operand) => {
+                let value_to_mult;
+                match operand {
+                    Operand::Immediate(value) => value_to_mult = *value,
+                    Operand::ImmediateAddress(value) => value_to_mult = self.memory.get(*value),
+                    Operand::IntermediateAddress(value) => { 
+                        let address = self.get_intermediate_address(*value);
+                        match address {
+                            Ok(address) => value_to_mult = self.memory.get(address),
+                            Err(message) => return Err(message)
+                        };
+                    }
+                    _ => { return Err("mult operation cannot be provided with label") }
+                }
+                let new_accumulator = self.memory.get(0) * value_to_mult;
+                self.memory.set(new_accumulator, 0);
+                self.instruction_pointer += 1;
+            },
+            Instruction::Div(operand) => {
+                let value_to_div;
+                match operand {
+                    Operand::Immediate(value) => value_to_div = *value,
+                    Operand::ImmediateAddress(value) => value_to_div = self.memory.get(*value),
+                    Operand::IntermediateAddress(value) => { 
+                        let address = self.get_intermediate_address(*value);
+                        match address {
+                            Ok(address) => value_to_div = self.memory.get(address),
+                            Err(message) => return Err(message)
+                        };
+                    }
+                    _ => { return Err("div operation cannot be provided with label") }
+                }
+                if value_to_div == 0 {
+                    return Err("division by zero");
+                }
+                let new_accumulator = self.memory.get(0) / value_to_div;
+                self.memory.set(new_accumulator, 0);
+                self.instruction_pointer += 1;
+            },
+            Instruction::Read(operand) => {
+                let address_to_store;
+                match operand {
+                    Operand::ImmediateAddress(value) => address_to_store = *value,
+                    Operand::IntermediateAddress(value) => { 
+                        let address = self.get_intermediate_address(*value);
+                        match address {
+                            Ok(address) => address_to_store = address,
+                            Err(message) => return Err(message)
+                        };
+                    },
+                    _ => return Err("read operation cannot be provided with immediate or label")
+                }
+                let tape_value = self.tapes.read();
+                match tape_value {
+                    Some(value) => self.memory.set(value, address_to_store),
+                    None => return Err("tried to read, but end of tape occured")
                 }
                 self.instruction_pointer += 1;
-            }
-            x => {
-                todo!("{:?}: not implemented yet", x);
+            },
+            Instruction::Write(operand) => {
+                let value_to_write;
+                match operand {
+                    Operand::Immediate(value) => value_to_write = *value,
+                    Operand::ImmediateAddress(value) => value_to_write = self.memory.get(*value),
+                    Operand::IntermediateAddress(value) => { 
+                        let address = self.get_intermediate_address(*value);
+                        match address {
+                            Ok(address) => value_to_write = self.memory.get(address),
+                            Err(message) => return Err(message)
+                        };
+                    },
+                    _ => return Err("write operation cannot be provided with label")
+                }
+                self.tapes.write(value_to_write);
+                self.instruction_pointer += 1;
+            },
+            Instruction::Jump(operand) => {
+                match operand {
+                    Operand::Label(value) => self.instruction_pointer = *value,
+                    _ => return Err("jump operation cannot be provided with immediate, immediate address or intermediate address")
+                }
+            },
+            Instruction::Jgtz(operand) => {
+                match operand {
+                    Operand::Label(value) => {
+                        if self.memory.get(0) > 0 {
+                            self.instruction_pointer = *value
+                        } else {
+                            self.instruction_pointer += 1;
+                        }
+                    },
+                    _ => return Err("jump operation cannot be provided with immediate, immediate address or intermediate address")
+                }
+            },
+            Instruction::Jzero(operand) => {
+                match operand {
+                    Operand::Label(value) => {
+                        if self.memory.get(0) == 0 {
+                            self.instruction_pointer = *value
+                        } else {
+                            self.instruction_pointer += 1;
+                        }
+                    },
+                    _ => return Err("jump operation cannot be provided with immediate, immediate address or intermediate address")
+                }
+            },
+            Instruction::Halt => {
+                self.halted = true;
             }
         }
         Ok(())
     }
 
     pub fn dump(&self) {
+        println!("instruction_pointer: {}", self.instruction_pointer);
         self.memory.dump();
     }
 
