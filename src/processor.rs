@@ -9,7 +9,7 @@ pub trait Tape {
     fn write(&mut self, value: i64);
 } 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum Operand {
     Immediate(ImmediateValue),
@@ -18,7 +18,7 @@ pub enum Operand {
     Label(InstructionLocation)
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum Instruction {
     Load(Operand),
