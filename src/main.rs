@@ -1,44 +1,67 @@
-use std::process::exit;
-
-use processor::{Processor, Instruction, Operand, Tape};
-
 mod memory;
 mod processor;
+mod parser;
 
-struct TestTape {
-    current: i64
+use std::process::exit;
+use std::io::{stdin, stdout, BufRead, Write};
+use processor::{Processor, Tape};
+use parser::parse_input;
+
+struct StdTape {
+    current_input: usize,
+    current_output: usize
 }
 
-impl TestTape {
-    fn new(starting_value: i64) -> Self {
-        TestTape {
-            current: starting_value
+impl StdTape {
+    fn new() -> Self {
+        Self {
+            current_input: 0,
+            current_output: 0
         }
     }
 }
 
-impl Tape for TestTape {
+impl Tape for StdTape {
     fn read(&mut self) -> Option<i64> {
-        let x = self.current;
-        self.current += 1;
-        Some(x)
+        print!("[{}] < ", self.current_input);
+        self.current_input += 1;
+        if let Err(_) = stdout().flush() { }
+        match stdin().lock().lines().next() {
+            Some(result) => {
+                match result {
+                    Ok(read_line) => {
+                        match read_line.trim().parse::<i64>() {
+                            Ok(value) => { return Some(value); },
+                            Err(_) => { return None }
+                        }
+                    },
+                    Err(_) => { return None }
+                }
+            },
+            None => { return None }
+        }
     }
     fn write(&mut self, value: i64) {
-        println!("out: {}", value);
+        println!("[{}] > {}", self.current_output, value);
+        self.current_output += 1;
     }
 }
 
 fn main() {
+
+    let parse_result = parse_input(&"examples/test.rasm".to_string());
+    if let Err(message) = parse_result {
+        println!("parser error: {}", message);
+        exit(1);
+    }
+
+    let instructions = parse_result.unwrap();
+    println!("{:?}", instructions);
+
     let mut processor = Processor::new(
-        vec![
-            Instruction::Load(Operand::Immediate(3)),
-            Instruction::Store(Operand::ImmediateAddress(1)),
-            Instruction::Load(Operand::Immediate(4096)),
-            Instruction::Store(Operand::IntermediateAddress(1)),
-            Instruction::Halt
-        ], 
+        instructions, 
         512,
-        TestTape::new(0)
+        StdTape::new()
     );
     while !processor.is_halted() {
         if let Err(message) = processor.execute_instruction() {
@@ -46,6 +69,6 @@ fn main() {
             exit(1);
         }
     }
-    processor.dump();
+    // processor.dump();
 }
 
