@@ -201,7 +201,7 @@ impl<T: Tape> Processor<T> {
                 let tape_value = self.tapes.read();
                 match tape_value {
                     Some(value) => self.memory.set(value, address_to_store),
-                    None => return Err("tried to read, but end of tape occured".to_string())
+                    None => return Err("tried to read, but tape error occured (end of input or malformed input)".to_string())
                 }
                 self.instruction_pointer += 1;
             },

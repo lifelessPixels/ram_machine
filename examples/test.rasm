@@ -1,0 +1,4 @@
+start:
+    read 1
+    write 1
+    jump start
