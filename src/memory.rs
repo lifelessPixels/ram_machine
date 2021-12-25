@@ -19,7 +19,7 @@ impl Memory {
 
     pub fn get(&self, index: usize) -> i64 {
         if index >= self.storage.len() { return 0; }
-        self.storage[index].clone()
+        self.storage[index]
     }
 
     #[allow(dead_code)]
