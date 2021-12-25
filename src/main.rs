@@ -3,6 +3,7 @@ mod processor;
 mod parser;
 
 use std::process::exit;
+use std::env::{args};
 use std::io::{stdin, stdout, BufRead, Write};
 use processor::{Processor, Tape};
 use parser::parse_input;
@@ -47,17 +48,26 @@ impl Tape for StdTape {
     }
 }
 
+fn print_usage(program_name: String) {
+    println!("usage: ./{} <source_code.rasm>", program_name)
+}
+
 fn main() {
 
-    let parse_result = parse_input(&"examples/test.rasm".to_string());
+    let arguments: Vec<String> = args().collect();
+    if arguments.len() != 2 {
+        print_usage(arguments[0].to_owned());
+        exit(1);
+    }
+    let filename = arguments[1].to_owned();
+
+    let parse_result = parse_input(&filename);
     if let Err(message) = parse_result {
         println!("parser error: {}", message);
         exit(1);
     }
 
     let instructions = parse_result.unwrap();
-    println!("{:?}", instructions);
-
     let mut processor = Processor::new(
         instructions, 
         512,
