@@ -49,17 +49,33 @@ impl Tape for StdTape {
 }
 
 fn print_usage(program_name: String) {
-    println!("usage: ./{} <source_code.rasm>", program_name)
+    println!("usage: ./{} [source_code.rasm] <memory size>", program_name)
 }
 
 fn main() {
 
     let arguments: Vec<String> = args().collect();
-    if arguments.len() != 2 {
+    if arguments.len() < 2 {
         print_usage(arguments[0].to_owned());
         exit(1);
     }
     let filename = arguments[1].to_owned();
+    let memory_size: usize = if arguments.len() == 3 {
+        let memory_size_string = arguments[2].to_owned();
+        match memory_size_string.parse::<usize>() {
+            Ok(value) => {
+                if value == 0 {
+                    println!("error: provided memory size cannot be 0");
+                    exit(1);
+                }
+                value
+            },
+            Err(_) => {
+                println!("error: provided memory size of {} is incorrect", memory_size_string);
+                exit(1);
+            }
+        }
+    } else { 512 };
 
     let parse_result = parse_input(&filename);
     if let Err(message) = parse_result {
@@ -68,9 +84,10 @@ fn main() {
     }
 
     let instructions = parse_result.unwrap();
+    println!("info: loaded {} instructions, memory size: {} cells", instructions.len(), memory_size);
     let mut processor = Processor::new(
         instructions, 
-        512,
+        memory_size,
         StdTape::new()
     );
     while !processor.is_halted() {
