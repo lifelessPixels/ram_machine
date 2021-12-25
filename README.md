@@ -1,5 +1,5 @@
 # ram_machine
-## RAM Machine emulator written in Rust
+RAM Machine emulator written in Rust
 
 ## Introduction
 `ram_machine` is simple, very crude parser and emulator of RAM Machine ([wiki](https://en.wikipedia.org/wiki/Random-access_machine)) written in Rust programming language. It's implementation is based on description published by Łukasz Szkup [here](https://www.szkup.com/?pid=praca_mgr) (description is written in Polish, unfortuantely).
@@ -18,7 +18,7 @@ cargo run examples/test.rasm    # or any other (yet not existant 😢) test prog
 
 ### Comments
 
-Comments are parts of souce code demoted by `:` which are ignored by emulator. They are terminated by skipping to new line (like `//` in C or simmilar languages). There is no notion for multi-line comments. They can be written like this:
+Comments are parts of souce code demoted by `;` which are ignored by emulator. They are terminated by skipping to new line (like `//` in C or simmilar languages). There is no notion for multi-line comments. They can be written like this:
 
 ```
 ; this is the comment
