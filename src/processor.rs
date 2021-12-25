@@ -1,39 +1,6 @@
 use crate::memory::Memory;
-
-type ImmediateValue = i64;
-type MemoryLocation = usize;
-type InstructionLocation = usize;
-
-pub trait Tape {
-    fn read(&mut self) -> Option<i64>;
-    fn write(&mut self, value: i64);
-} 
-
-#[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
-pub enum Operand {
-    Immediate(ImmediateValue),
-    ImmediateAddress(MemoryLocation),
-    IntermediateAddress(MemoryLocation),
-    Label(InstructionLocation)
-}
-
-#[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
-pub enum Instruction {
-    Load(Operand),
-    Store(Operand),
-    Add(Operand),
-    Sub(Operand),
-    Mult(Operand),
-    Div(Operand),
-    Read(Operand),
-    Write(Operand),
-    Jump(Operand),
-    Jgtz(Operand),
-    Jzero(Operand),
-    Halt
-}
+use crate::instructions::*;
+use crate::tape::Tape;
 
 pub struct Processor<T: Tape> {
     instructions: Vec<Instruction>,

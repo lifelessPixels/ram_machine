@@ -1,4 +1,4 @@
-use crate::processor::{Instruction, Operand};
+use crate::instructions::{Instruction, Operand};
 use std::{fs::{File}, io::{BufReader, BufRead}};
 
 #[derive(PartialEq)]
