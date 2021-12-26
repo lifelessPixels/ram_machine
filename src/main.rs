@@ -1,15 +1,9 @@
-mod memory;
-mod instructions;
-mod tape;
-mod processor;
-mod parser;
-
 use std::process::exit;
 use std::env::args;
 use std::io::{stdin, stdout, BufRead, Write};
-use processor::Processor;
-use tape::Tape;
-use parser::parse_input;
+use ram_machine::processor::Processor;
+use ram_machine::tape::Tape;
+use ram_machine::parser::parse_input;
 
 struct StdTape {
     current_input: usize,
