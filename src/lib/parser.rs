@@ -134,9 +134,11 @@ impl State {
             match entry {
                 Entry::Instruction(instruction) => result.push((*instruction).clone()),
                 Entry::UnfinishedInstruction(instruction, label) => {
+                    let labels_until_now = self.entries.iter().filter(|&x| -> bool { if let Entry::Label(_) = *x { true } else { false } }).count();
                     let search_result = self.entries.iter().position(|x| -> bool { *x == Entry::Label(label.clone()) } );
                     match search_result {
                         Some(instruction_pointer) => {
+                            let instruction_pointer = instruction_pointer - labels_until_now + 1;
                             match instruction {
                                 Instruction::Jump(_) => { result.push(Instruction::Jump(Operand::Label(instruction_pointer))); }
                                 Instruction::Jgtz(_) => { result.push(Instruction::Jgtz(Operand::Label(instruction_pointer))); }
