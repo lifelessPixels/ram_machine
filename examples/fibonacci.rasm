@@ -1,0 +1,42 @@
+; Memory layout:
+; |      0      |      1     | 2 | 3 | 4 |
+; | accumulator | user input | a | b | c |
+
+; firstly, get the input from user indicating the number of 
+; fibonacci numbers to calculate
+read 1 
+
+; check whether input is correct
+load 1
+jgtz fibonacci_init ; if user puts valid number (> 0) on the input, start doing something, otherwise jump straight to the end
+jump end ; if user puts 0 on the input, just end the execution
+
+; preparation of the environment
+fibonacci_init:
+    load =0
+    store 2 ; set a to be equal 0
+    load =1
+    store 3 ; set b to be equal 1
+
+; main loop of the program
+fibonacci_loop:
+    write 2 ; output current fibonacci number
+
+    load 3 ; save current b (it will be move to memory cell 2)
+    store 4
+
+    load 2 ; calculate next fibonacci number and store it in the place of b
+    add 3
+    store 3
+
+    load 4 ; move b value to a
+    store 2
+
+    load 1 ; load number provided by the user
+    sub =1 ; decrement it
+    store 1 ; save it back
+    jgtz fibonacci_loop ; loop around if not done yet
+
+; program epilogue
+end:
+    halt
