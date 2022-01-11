@@ -14,6 +14,8 @@ You can also run example programs written in RASM (RAM assembly) provided in `ex
 cargo run examples/test.rasm    # or any other (yet not existant 😢) test program
 ```
 
+If you want to see debug output (at the moment it is only printing executed instructions and their respective addresses) you can set environment variable `RAM_DEBUG` to any value.
+
 ## RAM Assembly syntax
 
 ### Comments
