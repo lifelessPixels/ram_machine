@@ -134,11 +134,18 @@ impl State {
             match entry {
                 Entry::Instruction(instruction) => result.push((*instruction).clone()),
                 Entry::UnfinishedInstruction(instruction, label) => {
-                    let labels_until_now = self.entries.iter().filter(|&x| -> bool { if let Entry::Label(_) = *x { true } else { false } }).count();
-                    let search_result = self.entries.iter().position(|x| -> bool { *x == Entry::Label(label.clone()) } );
+                    let search_result = self.entries.iter().position(|x| { *x == Entry::Label(label.clone()) } );
                     match search_result {
-                        Some(instruction_pointer) => {
-                            let instruction_pointer = instruction_pointer - labels_until_now + 1;
+                        Some(position) => {
+                            let labels_until_jumped_instruction = self.entries.iter().enumerate().filter(
+                                |&x| -> bool { 
+                                    if let Entry::Label(_) = *x.1 {
+                                        if x.0 < position + 1 { return true }
+                                        false
+                                    } else { false } 
+                                }
+                            ).count();
+                            let instruction_pointer = position - labels_until_jumped_instruction + 1;
                             match instruction {
                                 Instruction::Jump(_) => { result.push(Instruction::Jump(Operand::Label(instruction_pointer))); }
                                 Instruction::Jgtz(_) => { result.push(Instruction::Jgtz(Operand::Label(instruction_pointer))); }
