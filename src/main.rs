@@ -21,7 +21,7 @@ impl StdTape {
 
 impl Tape for StdTape {
     fn read(&mut self) -> Option<i64> {
-        print!("[{}] < ", self.current_input);
+        print!("[inp:{}] < ", self.current_input);
         self.current_input += 1;
         if let Err(_) = stdout().flush() { }
         match stdin().lock().lines().next() {
@@ -40,7 +40,7 @@ impl Tape for StdTape {
         }
     }
     fn write(&mut self, value: i64) {
-        println!("[{}] > {}", self.current_output, value);
+        println!("[out:{}] > {}", self.current_output, value);
         self.current_output += 1;
     }
 }
