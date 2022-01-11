@@ -227,6 +227,11 @@ impl<T: Tape> Processor<T> {
     }
 
     #[allow(dead_code)]
+    pub fn get_current_state(&self) ->  (&Instruction, usize) {
+        return (&self.instructions[self.instruction_pointer], self.instruction_pointer)
+    }
+
+    #[allow(dead_code)]
     pub fn dump(&self) {
         println!("instruction_pointer: {}", self.instruction_pointer);
         self.memory.dump();

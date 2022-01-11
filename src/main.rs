@@ -1,5 +1,5 @@
 use std::process::exit;
-use std::env::args;
+use std::env::{args, self};
 use std::io::{stdin, stdout, BufRead, Write};
 use ram_machine::processor::Processor;
 use ram_machine::tape::Tape;
@@ -51,6 +51,9 @@ fn print_usage(program_name: String) {
 
 fn main() {
 
+    let debug_var = env::vars().position(|x| { x.0 == "RAM_DEBUG"});
+    let debug_mode = debug_var.is_some();
+
     let arguments: Vec<String> = args().collect();
     if arguments.len() < 2 {
         print_usage(arguments[0].to_owned());
@@ -88,6 +91,10 @@ fn main() {
         StdTape::new()
     );
     while !processor.is_halted() {
+        if debug_mode {
+            let state = processor.get_current_state();
+            println!("debug: {:?} @ address {}", state.0, state.1);
+        }
         if let Err(message) = processor.execute_instruction() {
             println!("execution error: {}", message);
             exit(1);
