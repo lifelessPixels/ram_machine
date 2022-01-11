@@ -16,6 +16,18 @@ cargo run examples/test.rasm    # or any other (yet not existant 😢) test prog
 
 If you want to see debug output (at the moment it is only printing executed instructions and their respective addresses) you can set environment variable `RAM_DEBUG` to any value.
 
+When the machine is executing `read` instruction, it prints the prompt like this:
+```
+[inp:<number>] < 
+```
+and waits for user input. The `number` indicates on which position the "input tape" is located (sequence index of input data).
+
+Similarly, when `write` instruction is executed, it prepends the output data with:
+```
+[out:<number>] > <data>
+ ```
+The `number` indicates on which position the "output tape" currently is located (sequence index of output data) and the `data` is the written data.
+
 ## RAM Assembly syntax
 
 ### Comments
