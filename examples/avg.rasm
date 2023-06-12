@@ -1,0 +1,40 @@
+; memory layout:
+;  [0] -> accumulator
+;  [1] -> number of elements in sequence
+;  [2] -> number of elements copy
+;  [3] -> current element value
+;  [4] -> sum
+
+; read number of elements (and copy it)
+read 1
+load 1
+store 2
+
+; set sum to 0
+load =0
+store 4
+
+; read elements and sum them up
+read_loop:
+    ; read value and add it to sum
+    read 3
+    load 3
+    add 4
+    store 4
+
+    ; check if next iteration is necessary
+    load 1
+    sub =1
+    store 1
+    jgtz read_loop
+
+; calculate average
+load 4
+div 2
+store 4
+
+; write average
+write 4
+
+; halt the machine
+halt
